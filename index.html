@@ -1,0 +1,69 @@
+<html>
+	<head>
+		<script type='text/javascript' id='lt_ws' src='http://localhost:59240/socket.io/lighttable/ws.js'></script>
+	</head>
+    <body>
+        <script type="text/javascript" src="out/main.js"></script>
+        <code style="font-size:12px;float:right;width:60%;">
+<pre>(ns pong.core
+  (:use-macros
+    [ec.macros :only [C E dom]])
+  (:use [ec.core :only [e c ! init update draw destroy clone CDATA]]
+   [ec.game :only [find pump tag]])
+  (:require
+    [ec.draw :as d]))
+
+(C position [x y])
+
+(C velocity [x y]
+ (update [me]
+    (set! (.-x (:position (e me))) (+ (.-x (:position (e me))) x))
+    (set! (.-y (:position (e me))) (+ (.-y (:position (e me))) y))))
+
+(C box [w h color]
+  (draw [me]
+    (d/fill-style color)
+    (d/fill-rect (:x (:position (e me))) (:y (:position (e me))) w h)))
+
+(C circle [r color]
+  (draw [me]
+   (d/fill-style color)
+   (d/fill-rect (.-x (:position (e me))) (.-y (:position (e me))) 10 10)))
+
+(C ball []
+  (update [me]
+    (when-not (< 0 (.-y (:position (e me))) 480)
+      (set! (.-y (:velocity (e me))) (- (.-y (:velocity (e me))))))
+   (when-not (< 0 (.-x (:position (e me))) 640)
+      (set! (.-x (:velocity (e me))) (- (.-x (:velocity (e me))))))))
+
+(def game
+  (E {:position {:x 5 :y 5}
+    :tag {:key :game}
+    :pump {}
+    :canvas {:width 640 :height 480}
+    :children {:col [
+        (E {:position {:x 600 :y 240}
+             :box {:w 5 :h 40 :color "red"}})
+        (E {:position {:x 5 :y 240}
+             :box {:w 5 :h 40 :color "orange"}})]}}))
+
+(assoc (:children game) :col
+  (concat (:col (:children game))
+   (take 2000
+    (repeatedly
+      #(E {:tag {:key :ball}
+           :ball {}
+           :velocity {:x (+ (rand-nth [-2 2]) (rand))
+                      :y (- (rand) 0.5)}
+           :position {:x (+ (rand-int 60) 210)
+                      :y 240}
+           :circle {:r 5
+                    :color (str "rgb("(rand-int 255)","(rand-int 255)","(rand-int 255)")")}}))) ))
+
+(init game)
+(update game)
+</pre></code>
+    </body>
+</html>
+
